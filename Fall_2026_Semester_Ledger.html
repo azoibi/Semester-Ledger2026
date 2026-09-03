@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Fall 2026 — Semester Ledger</title>
+<style>
+  :root{
+    --bg:#12181F;
+    --surface:#1B2430;
+    --surface-2:#212C3A;
+    --ink:#EDEAE3;
+    --ink-dim:#8B93A1;
+    --ink-faint:#5B6472;
+    --gold:#D4A24C;
+    --teal:#4FA69A;
+    --crimson:#D64550;
+    --blue:#6C8EBF;
+    --purple:#9C7FC9;
+    --border:#2A3543;
+    --grid-line:rgba(237,234,227,0.035);
+    --radius:10px;
+    --serif: Fraunces, Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", "SF Mono", Menlo, Consolas, monospace;
+    --sans: Inter, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(var(--grid-line) 1px, transparent 1px) 0 0/100% 28px,
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px) 0 0/28px 100%,
+      var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    min-height:100vh;
+    padding: 28px 20px 80px;
+  }
+  .wrap{ max-width:1180px; margin:0 auto; }
+
+  /* ---------- HEADER ---------- */
+  header{
+    display:flex; justify-content:space-between; align-items:flex-end; gap:24px;
+    flex-wrap:wrap;
+    border-bottom:1px solid var(--border);
+    padding-bottom:22px; margin-bottom:26px;
+  }
+  .eyebrow{
+    font-family:var(--mono); font-size:11px; letter-spacing:.18em; text-transform:uppercase;
+    color:var(--teal); margin:0 0 8px;
+  }
+  h1{
+    font-family:var(--serif); font-weight:600; font-style:italic;
+    font-size:38px; margin:0; line-height:1.05; color:var(--ink);
+  }
+  .subline{ color:var(--ink-dim); font-size:13.5px; margin-top:8px; }
+  .subline b{ color:var(--ink); font-weight:600; }
+
+  .term-dial{
+    display:flex; align-items:center; gap:14px;
+  }
+  .dial-track{
+    width:150px; height:8px; background:var(--surface-2); border-radius:6px; overflow:hidden;
+    border:1px solid var(--border); position:relative;
+  }
+  .dial-fill{ height:100%; background:linear-gradient(90deg,var(--teal),var(--gold)); border-radius:6px; }
+  .dial-text{ font-family:var(--mono); font-size:12px; color:var(--ink-dim); text-align:right; }
+  .dial-text b{ color:var(--ink); font-size:15px; display:block; font-family:var(--sans); font-weight:700; }
+
+  /* ---------- STAT STRIP ---------- */
+  .stats{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:1px;
+    background:var(--border); border:1px solid var(--border); border-radius:var(--radius);
+    overflow:hidden; margin-bottom:32px;
+  }
+  .stat{ background:var(--surface); padding:16px 18px; }
+  .stat .n{ font-family:var(--serif); font-size:26px; color:var(--ink); }
+  .stat .l{ font-size:11.5px; color:var(--ink-dim); margin-top:2px; text-transform:uppercase; letter-spacing:.06em;}
+  .stat.warn .n{ color:var(--crimson); }
+  .stat.good .n{ color:var(--teal); }
+
+  /* ---------- DEADLINE RAIL ---------- */
+  .section-title{
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--ink-faint); margin:0 0 12px; display:flex; align-items:center; gap:10px;
+  }
+  .section-title::after{ content:""; flex:1; height:1px; background:var(--border); }
+
+  .rail{ display:flex; gap:12px; overflow-x:auto; padding-bottom:14px; margin-bottom:34px; }
+  .rail::-webkit-scrollbar{ height:6px; }
+  .rail::-webkit-scrollbar-thumb{ background:var(--border); border-radius:4px; }
+  .dcard{
+    min-width:200px; background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    padding:14px 16px; flex-shrink:0; position:relative; border-left:3px solid var(--course-color, var(--teal));
+  }
+  .dcard .course-pill{ font-family:var(--mono); font-size:10px; color:var(--ink-dim); text-transform:uppercase; letter-spacing:.05em;}
+  .dcard .name{ font-size:13.5px; margin:6px 0 12px; line-height:1.3; min-height:34px; }
+  .dcard .badge{
+    font-family:var(--mono); font-size:11px; font-weight:700; padding:3px 9px; border-radius:20px;
+    display:inline-block;
+  }
+  .badge.urgent{ background:rgba(214,69,80,.15); color:var(--crimson); }
+  .badge.soon{ background:rgba(212,162,76,.15); color:var(--gold); }
+  .badge.later{ background:rgba(79,166,154,.15); color:var(--teal); }
+  .badge.over{ background:var(--crimson); color:#fff; }
+  .empty-rail{ color:var(--ink-faint); font-size:13px; font-style:italic; padding:10px 0 26px;}
+
+  /* ---------- COURSE GRID ---------- */
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(340px,1fr)); gap:16px; margin-bottom:14px;}
+  .course{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    border-top:3px solid var(--course-color);
+    padding:18px 20px; display:flex; flex-direction:column; gap:12px;
+  }
+  .course-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+  .course-head h3{
+    font-family:var(--serif); font-size:19px; margin:0; color:var(--ink); font-style:italic; font-weight:600;
+  }
+  .course-head .del{ background:none;border:none;color:var(--ink-faint);cursor:pointer;font-size:16px;line-height:1; padding:2px 4px;}
+  .course-head .del:hover{ color:var(--crimson); }
+  .course-meta{ display:flex; gap:16px; font-family:var(--mono); font-size:11.5px; color:var(--ink-dim); }
+  .course-meta b{ color:var(--course-color); font-size:15px; font-family:var(--sans); }
+  .prog-track{ height:6px; background:var(--surface-2); border-radius:4px; overflow:hidden; border:1px solid var(--border);}
+  .prog-fill{ height:100%; background:var(--course-color); }
+
+  .toggle-btn{
+    align-self:flex-start; background:none; border:none; color:var(--course-color); font-family:var(--mono);
+    font-size:11.5px; cursor:pointer; padding:0; text-decoration:underline; text-underline-offset:3px;
+  }
+
+  .items{ display:none; flex-direction:column; gap:8px; margin-top:4px; }
+  .items.open{ display:flex; }
+  .item{
+    background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .item-row1{ display:flex; justify-content:space-between; gap:10px; align-items:flex-start;}
+  .item-name{ font-size:13px; flex:1; }
+  .item-name input{ width:100%; }
+  .bonus-tag{ font-family:var(--mono); font-size:9.5px; color:var(--gold); border:1px solid var(--gold); border-radius:20px; padding:1px 6px; margin-left:6px;}
+  .item-del{ background:none;border:none;color:var(--ink-faint); cursor:pointer; font-size:14px;}
+  .item-del:hover{ color:var(--crimson); }
+  .item-row2{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+  .field{ display:flex; flex-direction:column; gap:3px; }
+  .field label{ font-family:var(--mono); font-size:9px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em;}
+  input, select, textarea{
+    background:var(--bg); border:1px solid var(--border); color:var(--ink); border-radius:6px;
+    padding:5px 7px; font-family:var(--sans); font-size:12.5px;
+  }
+  input:focus, select:focus, textarea:focus{ outline:2px solid var(--course-color, var(--teal)); outline-offset:1px; }
+  .w-in{ width:52px; } .g-in{ width:56px; } .d-in{ width:132px; } .s-in{ width:118px;}
+  .notes-in{ width:100%; }
+  .days-chip{ font-family:var(--mono); font-size:10.5px; padding:3px 7px; border-radius:5px; white-space:nowrap; }
+
+  .subtasks{ display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
+  .subtask{ display:flex; align-items:center; gap:5px; font-size:11px; color:var(--ink-dim); background:var(--bg); border:1px solid var(--border); border-radius:5px; padding:3px 7px;}
+  .subtask input{ width:auto; margin:0; accent-color:var(--course-color); }
+
+  .add-item-btn{
+    align-self:flex-start; background:none; border:1px dashed var(--border); color:var(--ink-dim);
+    font-size:12px; padding:6px 12px; border-radius:6px; cursor:pointer; font-family:var(--sans);
+  }
+  .add-item-btn:hover{ border-color:var(--course-color); color:var(--course-color); }
+  .empty-course{ color:var(--ink-faint); font-size:12.5px; font-style:italic; padding:6px 0; }
+
+  .add-course{
+    border:1.5px dashed var(--border); border-radius:var(--radius); display:flex; align-items:center;
+    justify-content:center; min-height:120px; color:var(--ink-faint); cursor:pointer; font-size:14px;
+    background:transparent; font-family:var(--sans);
+  }
+  .add-course:hover{ border-color:var(--teal); color:var(--teal); }
+
+  footer{ margin-top:40px; text-align:center; color:var(--ink-faint); font-size:11.5px; font-family:var(--mono); }
+  .save-flag{ position:fixed; bottom:18px; right:18px; font-family:var(--mono); font-size:11px; color:var(--ink-faint);
+    background:var(--surface); border:1px solid var(--border); padding:6px 12px; border-radius:20px; opacity:0; transition:opacity .3s; pointer-events:none;}
+  .save-flag.show{ opacity:1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="eyebrow">Fall 2026 · Western University</p>
+      <h1>Semester Ledger</h1>
+      <p class="subline">Classes started <b>Sept 10</b> · Today is <b id="today-str">—</b></p>
+    </div>
+    <div class="term-dial">
+      <div class="dial-text"><span id="term-pct">—</span><b id="term-days">—</b></div>
+      <div class="dial-track"><div class="dial-fill" id="dial-fill" style="width:0%"></div></div>
+    </div>
+  </header>
+
+  <div class="stats" id="stats"></div>
+
+  <p class="section-title">Coming up</p>
+  <div class="rail" id="rail"></div>
+
+  <p class="section-title">Courses</p>
+  <div class="grid" id="grid"></div>
+
+</div>
+
+<div class="save-flag" id="save-flag">saved</div>
+
+<script>
+const STORAGE_KEY = 'courses-data-v1';
+const PALETTE = ['--teal','--gold','--blue','--crimson','--purple'];
+let paletteIdx = 0;
+
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+// NOTE: seed ids below are fixed strings, not uid(). This is what lets future
+// updates to this file merge in new items without touching anything you've
+// already filled in. Only add new ids here going forward, never reuse or
+// change an existing one, or the merge will treat it as a fresh item.
+function seedData(){
+  return {
+    termStart: '2026-09-10',
+    termEnd: '2026-12-04',
+    courses: [
+      {
+        id: 'chem2213a', name: 'CHEM 2213A', color: '--teal',
+        items: [
+          {id:'chem2213a-lab1', name:'Lab 1 — Synthesis, Recrystallization, Melting Point', weight:4, due:'2026-09-21', status:'not-started', grade:null, notes:'Prelab video + quiz due before lab', bonus:false,
+            subtasks:[{id:'chem2213a-lab1-prelab', label:'Prelab video + quiz (due Sept 19)', done:false}]},
+          {id:'chem2213a-lab2', name:'Lab 2 — Extraction, 3-component mixture', weight:4, due:'2026-10-19', status:'not-started', grade:null, notes:'Prelab video + quiz due before lab', bonus:false,
+            subtasks:[{id:'chem2213a-lab2-prelab', label:'Prelab video + quiz (due Oct 17)', done:false}]},
+          {id:'chem2213a-lab3', name:'Lab 3 — Alkyl Halides Reactivity', weight:4, due:'2026-11-02', status:'not-started', grade:null, notes:'Prelab video + quiz due before lab, same day as midterm', bonus:false,
+            subtasks:[{id:'chem2213a-lab3-prelab', label:'Prelab video + quiz (due Oct 31)', done:false}]},
+          {id:'chem2213a-lab4', name:'Lab 4 — Cyclohexene Synthesis, C=C Tests', weight:4, due:'2026-11-16', status:'not-started', grade:null, notes:'Prelab video + quiz due before lab', bonus:false,
+            subtasks:[{id:'chem2213a-lab4-prelab', label:'Prelab video + quiz (due Nov 14)', done:false}]},
+          {id:'chem2213a-lab5', name:'Lab 5 — Carbonyl Compound Tests', weight:4, due:'2026-11-30', status:'not-started', grade:null, notes:'Prelab video + quiz due before lab', bonus:false,
+            subtasks:[{id:'chem2213a-lab5-prelab', label:'Prelab video + quiz (due Nov 28)', done:false}]},
+          {id:'chem2213a-wileyplus', name:'WileyPlus Assignments (top 7 of 10 count)', weight:10, due:null, status:'not-started', grade:null, notes:'Opens ~2 weeks at a time, check off as you go', bonus:false,
+            subtasks:Array.from({length:10},(_,i)=>({id:'chem2213a-wileyplus-'+(i+1), label:'#'+(i+1), done:false}))},
+          {id:'chem2213a-midterm', name:'Midterm — Test of Knowledge', weight:25, due:'2026-10-31', status:'not-started', grade:null, notes:'In person, no electronics, 7:30–9:30pm', bonus:false, subtasks:[]},
+          {id:'chem2213a-final', name:'Final Exam', weight:45, due:null, status:'not-started', grade:null, notes:'Date TBA by Registrar', bonus:false, subtasks:[]},
+          {id:'chem2213a-bonus', name:'Orgo2213Art Bonus', weight:3, due:'2026-11-22', status:'not-started', grade:null, notes:'Optional, adds on top', bonus:true, subtasks:[]},
+        ]
+      },
+      { id: 'biochem2280a', name: 'BIOCHEM 2280A', color:'--gold', items: [] },
+      { id: 'healtsci2800', name: 'HEALTSCI 2800', color:'--blue', items: [] },
+      { id: 'calc1000a', name: 'CALCULUS 1000A', color:'--crimson', items: [] },
+      { id: 'indstudy', name: 'Independent Study', color:'--purple', items: [] },
+    ]
+  };
+}
+
+// Adds anything present in `seed` but missing from `stored`, without ever
+// overwriting a value that's already in `stored`. This is what makes it safe
+// for me to ship you an updated file later, your edits are never lost.
+function mergeSeedInto(stored, seed){
+  seed.courses.forEach(seedCourse=>{
+    let course = stored.courses.find(c=>c.id===seedCourse.id);
+    if(!course){
+      stored.courses.push(JSON.parse(JSON.stringify(seedCourse)));
+      return;
+    }
+    seedCourse.items.forEach(seedItem=>{
+      let item = course.items.find(i=>i.id===seedItem.id);
+      if(!item){
+        course.items.push(JSON.parse(JSON.stringify(seedItem)));
+        return;
+      }
+      if(seedItem.subtasks && seedItem.subtasks.length){
+        item.subtasks = item.subtasks || [];
+        seedItem.subtasks.forEach(st=>{
+          if(!item.subtasks.find(x=>x.id===st.id)){
+            item.subtasks.push({...st});
+          }
+        });
+      }
+    });
+  });
+  return stored;
+}
+
+// Cleanup for a one-time issue: the very first time the fixed-id seed above
+// replaced the old random-id seed, courses matched on id (not name), so old
+// and new versions of the same 5 courses both got kept, doubling everything.
+// This finds courses that share a name, folds them back into a single course
+// (keeping the fixed-id version, but pulling across any real edits from the
+// old duplicate first), and drops the leftover duplicate.
+function dedupeCoursesByName(data, seed){
+  const seedIds = new Set(seed.courses.map(c=>c.id));
+  const groups = {};
+  data.courses.forEach(c=>{
+    (groups[c.name] = groups[c.name] || []).push(c);
+  });
+  const result = [];
+  Object.values(groups).forEach(group=>{
+    if(group.length === 1){ result.push(group[0]); return; }
+    const keeper = group.find(c=>seedIds.has(c.id)) || group[0];
+    const others = group.filter(c=>c!==keeper);
+    others.forEach(other=>{
+      other.items.forEach(oitem=>{
+        const kitem = keeper.items.find(ki=>ki.name===oitem.name);
+        if(!kitem){ keeper.items.push(oitem); return; }
+        if(oitem.status && oitem.status!=='not-started' && kitem.status==='not-started') kitem.status = oitem.status;
+        if((oitem.grade!==null && oitem.grade!==undefined) && (kitem.grade===null || kitem.grade===undefined)) kitem.grade = oitem.grade;
+        if(oitem.due && !kitem.due) kitem.due = oitem.due;
+        if(oitem.weight && !kitem.weight) kitem.weight = oitem.weight;
+        if(oitem.subtasks && oitem.subtasks.length){
+          kitem.subtasks = kitem.subtasks || [];
+          oitem.subtasks.forEach(ost=>{
+            const kst = kitem.subtasks.find(x=>x.label===ost.label);
+            if(kst){ if(ost.done && !kst.done) kst.done = true; }
+            else { kitem.subtasks.push(ost); }
+          });
+        }
+      });
+    });
+    result.push(keeper);
+  });
+  data.courses = result;
+  return data;
+}
+
+let DATA = null;
+let openCourses = new Set();
+
+async function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw === null) throw new Error('no data yet');
+    DATA = JSON.parse(raw);
+    DATA = mergeSeedInto(DATA, seedData());
+    DATA = dedupeCoursesByName(DATA, seedData());
+    await persist();
+  }catch(e){
+    DATA = seedData();
+    await persist();
+  }
+  render();
+}
+
+let saveTimer=null;
+async function persist(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+    flagSaved();
+  }catch(e){ console.error('save failed', e); }
+}
+function scheduleSave(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(persist, 400);
+}
+function flagSaved(){
+  const f = document.getElementById('save-flag');
+  f.classList.add('show');
+  setTimeout(()=>f.classList.remove('show'), 900);
+}
+
+function daysUntil(dateStr){
+  if(!dateStr) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(dateStr+'T00:00:00');
+  return Math.round((d-today)/86400000);
+}
+function fmtDate(dateStr){
+  if(!dateStr) return 'TBA';
+  const d = new Date(dateStr+'T00:00:00');
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+}
+
+function render(){
+  renderHeader();
+  renderStats();
+  renderRail();
+  renderGrid();
+}
+
+function renderHeader(){
+  const today = new Date();
+  document.getElementById('today-str').textContent = today.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+  const start = new Date(DATA.termStart+'T00:00:00');
+  const end = new Date(DATA.termEnd+'T00:00:00');
+  const total = (end-start)/86400000;
+  const elapsed = Math.min(Math.max((today-start)/86400000,0), total);
+  const pct = Math.round((elapsed/total)*100);
+  document.getElementById('dial-fill').style.width = pct+'%';
+  document.getElementById('term-pct').textContent = 'Term progress';
+  document.getElementById('term-days').textContent = pct+'%';
+}
+
+function allItems(){
+  const out=[];
+  DATA.courses.forEach(c=>c.items.forEach(it=>out.push({...it, courseName:c.name, courseColor:c.color})));
+  return out;
+}
+
+function renderStats(){
+  const items = allItems();
+  const withDue = items.filter(i=>i.due);
+  const upcoming = withDue.filter(i=>daysUntil(i.due)>=0).sort((a,b)=>daysUntil(a.due)-daysUntil(b.due));
+  const overdue = withDue.filter(i=>daysUntil(i.due)<0 && i.status!=='done');
+  const done = items.filter(i=>i.status==='done').length;
+
+  const stats = document.getElementById('stats');
+  stats.innerHTML = '';
+  const cells = [
+    {n: DATA.courses.length, l:'Courses tracked'},
+    {n: items.length, l:'Items total'},
+    {n: done+' / '+items.length, l:'Marked done', good:true},
+    {n: upcoming.length ? fmtDate(upcoming[0].due)+' · '+daysUntil(upcoming[0].due)+'d' : '—', l: upcoming.length ? 'Next deadline ('+upcoming[0].courseName+')' : 'No upcoming dates', warn: overdue.length>0},
+  ];
+  cells.forEach(c=>{
+    const div = document.createElement('div');
+    div.className = 'stat'+(c.good?' good':'')+(c.warn?' warn':'');
+    div.innerHTML = `<div class="n">${c.n}</div><div class="l">${c.l}</div>`;
+    stats.appendChild(div);
+  });
+}
+
+function renderRail(){
+  const rail = document.getElementById('rail');
+  rail.innerHTML = '';
+  const items = allItems().filter(i=>i.due).sort((a,b)=>daysUntil(a.due)-daysUntil(b.due)).slice(0,10);
+  if(!items.length){
+    rail.innerHTML = '<p class="empty-rail">No dated items yet. Add due dates on any item below and they will show up here.</p>';
+    return;
+  }
+  items.forEach(it=>{
+    const d = daysUntil(it.due);
+    let badgeClass='later', label=d+' days';
+    if(d<0){ badgeClass='over'; label='OVERDUE'; }
+    else if(d===0){ badgeClass='urgent'; label='TODAY'; }
+    else if(d<=3){ badgeClass='urgent'; label=d+' days'; }
+    else if(d<=10){ badgeClass='soon'; label=d+' days'; }
+    const card = document.createElement('div');
+    card.className='dcard';
+    card.style.setProperty('--course-color', `var(${it.courseColor})`);
+    card.innerHTML = `
+      <div class="course-pill">${it.courseName}</div>
+      <div class="name">${it.name}</div>
+      <span class="badge ${badgeClass}">${label} · ${fmtDate(it.due)}</span>
+    `;
+    rail.appendChild(card);
+  });
+}
+
+function renderGrid(){
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  DATA.courses.forEach(course=>{
+    grid.appendChild(courseCard(course));
+  });
+  const addBtn = document.createElement('button');
+  addBtn.className = 'add-course';
+  addBtn.textContent = '+ Add another course';
+  addBtn.onclick = ()=>{
+    const name = prompt('Course name (e.g. PSYCH 2016A)');
+    if(!name) return;
+    const color = PALETTE[paletteIdx % PALETTE.length]; paletteIdx++;
+    DATA.courses.push({id:uid(), name, color, items:[]});
+    scheduleSave(); render();
+  };
+  grid.appendChild(addBtn);
+}
+
+function courseCard(course){
+  const div = document.createElement('div');
+  div.className='course';
+  div.style.setProperty('--course-color', `var(${course.color})`);
+
+  const nonBonus = course.items.filter(i=>!i.bonus);
+  const totalWeight = nonBonus.reduce((s,i)=>s+(Number(i.weight)||0),0);
+  const gradedItems = course.items.filter(i=>i.grade!==null && i.grade!=='' && i.grade!==undefined);
+  const earned = gradedItems.reduce((s,i)=>s+((Number(i.weight)||0)*(Number(i.grade)||0)/100),0);
+  const doneCount = course.items.filter(i=>i.status==='done').length;
+  const progPct = course.items.length ? Math.round((doneCount/course.items.length)*100) : 0;
+
+  const isOpen = openCourses.has(course.id);
+
+  div.innerHTML = `
+    <div class="course-head">
+      <h3>${course.name}</h3>
+      <button class="del" title="Remove course" data-action="del-course" data-id="${course.id}">✕</button>
+    </div>
+    <div class="course-meta">
+      <div>Grade so far <b>${gradedItems.length ? earned.toFixed(1)+'%' : '—'}</b></div>
+      <div>Weight entered <b>${totalWeight}%</b></div>
+      <div>Items done <b>${doneCount}/${course.items.length}</b></div>
+    </div>
+    <div class="prog-track"><div class="prog-fill" style="width:${progPct}%"></div></div>
+    <button class="toggle-btn" data-action="toggle" data-id="${course.id}">${isOpen ? 'Hide items ▲' : 'Show items ▼'}</button>
+    <div class="items ${isOpen?'open':''}" id="items-${course.id}"></div>
+    <button class="add-item-btn" data-action="add-item" data-id="${course.id}">+ Add item</button>
+  `;
+
+  const itemsWrap = div.querySelector(`#items-${course.id}`);
+  if(!course.items.length){
+    itemsWrap.innerHTML = '<p class="empty-course">No items yet. Add labs, tests, assignments as you get the outline.</p>';
+  } else {
+    course.items.forEach(item=>itemsWrap.appendChild(itemRow(course, item)));
+  }
+
+  div.querySelectorAll('[data-action]').forEach(el=>{
+    el.addEventListener('click', handleAction);
+  });
+  return div;
+}
+
+function itemRow(course, item){
+  const row = document.createElement('div');
+  row.className='item';
+  const d = item.due ? daysUntil(item.due) : null;
+  let chipHtml='';
+  if(d!==null){
+    let bg='var(--surface-2)', col='var(--ink-dim)';
+    if(d<0){ col='var(--crimson)'; } else if(d<=3){ col='var(--crimson)'; } else if(d<=10){ col='var(--gold)'; } else { col='var(--teal)'; }
+    chipHtml = `<span class="days-chip" style="border:1px solid ${col};color:${col}">${d<0?'overdue':d+'d left'}</span>`;
+  }
+
+  row.innerHTML = `
+    <div class="item-row1">
+      <div class="item-name">
+        <input type="text" value="${escapeAttr(item.name)}" data-field="name" data-item="${item.id}" data-course="${course.id}" />
+        ${item.bonus ? '<span class="bonus-tag">BONUS</span>' : ''}
+      </div>
+      ${chipHtml}
+      <button class="item-del" data-action="del-item" data-course="${course.id}" data-item="${item.id}">✕</button>
+    </div>
+    <div class="item-row2">
+      <div class="field"><label>Weight %</label><input class="w-in" type="number" min="0" max="100" value="${item.weight ?? ''}" data-field="weight" data-item="${item.id}" data-course="${course.id}" /></div>
+      <div class="field"><label>Due date</label><input class="d-in" type="date" value="${item.due ?? ''}" data-field="due" data-item="${item.id}" data-course="${course.id}" /></div>
+      <div class="field"><label>Status</label>
+        <select class="s-in" data-field="status" data-item="${item.id}" data-course="${course.id}">
+          <option value="not-started" ${item.status==='not-started'?'selected':''}>Not started</option>
+          <option value="in-progress" ${item.status==='in-progress'?'selected':''}>In progress</option>
+          <option value="done" ${item.status==='done'?'selected':''}>Done</option>
+        </select>
+      </div>
+      <div class="field"><label>Grade %</label><input class="g-in" type="number" min="0" max="100" value="${item.grade ?? ''}" data-field="grade" data-item="${item.id}" data-course="${course.id}" /></div>
+    </div>
+    <input class="notes-in" type="text" placeholder="Notes" value="${escapeAttr(item.notes||'')}" data-field="notes" data-item="${item.id}" data-course="${course.id}" />
+    ${item.subtasks && item.subtasks.length ? subtasksHtml(course.id, item) : ''}
+  `;
+
+  row.querySelectorAll('input,select').forEach(el=>{
+    const rerenders = el.tagName==='SELECT' || el.type==='date' || el.type==='number';
+    el.addEventListener(rerenders ? 'change' : 'input', handleFieldChange);
+  });
+  row.querySelectorAll('[data-action]').forEach(el=>el.addEventListener('click', handleAction));
+  return row;
+}
+
+function subtasksHtml(courseId, item){
+  const boxes = item.subtasks.map(st=>`
+    <label class="subtask">
+      <input type="checkbox" ${st.done?'checked':''} data-action="toggle-subtask" data-course="${courseId}" data-item="${item.id}" data-sub="${st.id}" />
+      ${st.label}
+    </label>`).join('');
+  const doneCount = item.subtasks.filter(s=>s.done).length;
+  return `<div class="subtasks">${boxes}<span style="font-family:var(--mono);font-size:10.5px;color:var(--ink-faint);align-self:center;">${doneCount}/${item.subtasks.length} done</span></div>`;
+}
+
+function escapeAttr(s){
+  return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function findCourse(id){ return DATA.courses.find(c=>c.id===id); }
+function findItem(course, id){ return course.items.find(i=>i.id===id); }
+
+function handleFieldChange(e){
+  const el = e.target;
+  const courseId = el.dataset.course, itemId = el.dataset.item, field = el.dataset.field;
+  const course = findCourse(courseId); if(!course) return;
+  const item = findItem(course, itemId); if(!item) return;
+  let val = el.value;
+  if(field==='weight' || field==='grade'){ val = val===''? null : Number(val); }
+  if(field==='due'){ val = val===''? null : val; }
+  item[field] = val;
+  scheduleSave();
+  // light re-render for chips/progress without losing focus on text fields
+  if(field==='weight' || field==='grade' || field==='status' || field==='due'){
+    render();
+    // restore open state visually
+    if(openCourses.has(courseId)){
+      const wrap = document.getElementById('items-'+courseId);
+      if(wrap) wrap.classList.add('open');
+    }
+  }
+}
+
+function handleAction(e){
+  const el = e.currentTarget;
+  const action = el.dataset.action;
+  if(action==='toggle'){
+    const id = el.dataset.id;
+    if(openCourses.has(id)) openCourses.delete(id); else openCourses.add(id);
+    render();
+  }
+  if(action==='add-item'){
+    const course = findCourse(el.dataset.id);
+    course.items.push({id:uid(), name:'New item', weight:0, due:null, status:'not-started', grade:null, notes:'', bonus:false, subtasks:[]});
+    openCourses.add(course.id);
+    scheduleSave(); render();
+  }
+  if(action==='del-item'){
+    const course = findCourse(el.dataset.course);
+    course.items = course.items.filter(i=>i.id!==el.dataset.item);
+    scheduleSave(); render();
+    if(openCourses.has(course.id)){
+      const wrap = document.getElementById('items-'+course.id);
+      if(wrap) wrap.classList.add('open');
+    }
+  }
+  if(action==='del-course'){
+    if(!confirm('Remove this course and all its items?')) return;
+    DATA.courses = DATA.courses.filter(c=>c.id!==el.dataset.id);
+    scheduleSave(); render();
+  }
+  if(action==='toggle-subtask'){
+    const course = findCourse(el.dataset.course);
+    const item = findItem(course, el.dataset.item);
+    const st = item.subtasks.find(s=>s.id===el.dataset.sub);
+    st.done = el.checked;
+    scheduleSave();
+    render();
+    if(openCourses.has(course.id)){
+      const wrap = document.getElementById('items-'+course.id);
+      if(wrap) wrap.classList.add('open');
+    }
+  }
+}
+
+load();
+</script>
+</body>
+</html>
